@@ -10,7 +10,7 @@ from . import packet, options, utils
 from .exceptions import DHCPClientError
 
 
-COL_LEN = 80
+COL_LEN = 80-3
 
 Lease = collections.namedtuple(
     "Lease", ["discover", "offer", "request", "ack", "time", "server"]
@@ -149,6 +149,11 @@ class DHCPClient(object):
             if verbosity > 1:
                 print("Did not receive ack packet")
         return ack
+
+    def send_release(
+        self, server: str, release_packet: packet.DHCPPacket, verbosity: int
+    ):
+        self.send(server, self.send_to_port, release_packet.asbytes, verbosity)
 
     def get_lease(
         self,

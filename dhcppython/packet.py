@@ -430,3 +430,46 @@ class DHCPPacket(object):
             fname,
             option_list,
         )
+
+
+    @classmethod
+    def Release(
+        cls,
+        mac_addr: str,
+        seconds: int,
+        tx_id: int,
+        yiaddr: Union[int, str],
+        use_broadcast: bool = True,
+        relay: Optional[str] = None,
+        sname: bytes = b"",
+        fname: bytes = b"",
+        option_list: Optional[options.OptionList] = None,
+    ):
+        """
+        Convenient constructor for a DHCP release packet.
+        """
+        if len(mac_addr.split(":")) != 6 or len(mac_addr) != 17:
+            raise DHCPValueError(
+                "MAC address must consist of 6 octets delimited by ':'"
+            )
+        option_list = option_list if option_list else options.OptionList()
+        option_list.insert(0, options.options.short_value_to_object(53, "DHCPRELEASE"))
+        relay_ip = ipaddress.IPv4Address(relay or 0)
+        return cls(
+            "BOOTREQUEST",
+            cls.htype_map[1],  # 10 mb ethernet
+            6,  # 6 byte hardware addr
+            0,  # clients should set this to 0
+            tx_id,
+            seconds,
+            0b1000_0000_0000_0000 if use_broadcast else 0,
+            ipaddress.IPv4Address(0),
+            # yiaddr - "your address", address being proposed by server
+            ipaddress.IPv4Address(yiaddr),
+            ipaddress.IPv4Address(0),
+            relay_ip,
+            mac_addr,
+            sname,
+            fname,
+            option_list,
+        )
