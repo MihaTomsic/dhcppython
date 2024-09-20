@@ -436,11 +436,11 @@ class DHCPPacket(object):
     def Release(
         cls,
         mac_addr: str,
-        seconds: int,
-        tx_id: int,
-        yiaddr: Union[int, str],
+        seconds: int = 0,
+        tx_id: int = 0,
         use_broadcast: bool = True,
         relay: Optional[str] = None,
+        client: Optional[str] = None,
         sname: bytes = b"",
         fname: bytes = b"",
         option_list: Optional[options.OptionList] = None,
@@ -455,18 +455,24 @@ class DHCPPacket(object):
         option_list = option_list if option_list else options.OptionList()
         option_list.insert(0, options.options.short_value_to_object(53, "DHCPRELEASE"))
         relay_ip = ipaddress.IPv4Address(relay or 0)
+        client_ip = ipaddress.IPv4Address(client or 0)
         return cls(
             "BOOTREQUEST",
             cls.htype_map[1],  # 10 mb ethernet
             6,  # 6 byte hardware addr
             0,  # clients should set this to 0
-            tx_id,
+            tx_id or random.getrandbits(32),
             seconds,
             0b1000_0000_0000_0000 if use_broadcast else 0,
-            ipaddress.IPv4Address(0),
+            # ciaddr - client address
+            #ipaddress.IPv4Address(0),
+            client_ip,
             # yiaddr - "your address", address being proposed by server
-            ipaddress.IPv4Address(yiaddr),
+            #ipaddress.IPv4Address(0),
+            client_ip,
+            # siaddr - servr address
             ipaddress.IPv4Address(0),
+            # giaddr - gateway address = relay address
             relay_ip,
             mac_addr,
             sname,

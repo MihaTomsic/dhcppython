@@ -155,6 +155,26 @@ class DHCPClient(object):
     ):
         self.send(server, self.send_to_port, release_packet.asbytes, verbosity)
 
+    def get_release(
+        self,
+        mac_addr: Optional[str] = None,
+        server: str = "255.255.255.255",
+        relay: Optional[str] = None,
+        client: Optional[str] = None,
+        broadcast: bool = True,        
+        options_list: Optional[options.OptionList] = None,
+        verbose: int = 0,            
+    ):
+        release = packet.DHCPPacket.Release(
+            mac_addr,
+            use_broadcast=broadcast,
+            option_list=options_list,
+            relay=relay,
+            client=client,
+        )
+        self.send_release(server=server, release_packet=release, verbosity=verbose)
+
+
     def get_lease(
         self,
         mac_addr: Optional[str] = None,
