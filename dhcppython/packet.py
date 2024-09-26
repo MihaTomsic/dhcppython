@@ -479,3 +479,52 @@ class DHCPPacket(object):
             fname,
             option_list,
         )
+
+    @classmethod
+    def Inform(
+        cls,
+        mac_addr: str,
+        seconds: int = 0,
+        tx_id: int = 0,
+        use_broadcast: bool = True,
+        relay: Optional[str] = None,
+        client_ip: Optional[str] = None,
+        sname: bytes = b"",
+        fname: bytes = b"",
+        option_list: Optional[options.OptionList] = None,
+    ):
+        """
+        Convenient constructor for a DHCP inform packet.
+        """
+        if len(mac_addr.split(":")) != 6 or len(mac_addr) != 17:
+            raise DHCPValueError(
+                "MAC address must consist of 6 octets delimited by ':'"
+            )
+        option_list = option_list if option_list else options.OptionList()
+        option_list.insert(0, options.options.short_value_to_object(53, "DHCPINFORM"))
+        relay_ip = ipaddress.IPv4Address(relay or 0)
+        client_ip = ipaddress.IPv4Address(client_ip or 0)
+        return cls(
+            "BOOTREQUEST",
+            cls.htype_map[1],  # 10 mb ethernet
+            6,  # 6 byte hardware addr
+            0,  # clients should set this to 0
+            tx_id or random.getrandbits(32),
+            seconds,
+            0b1000_0000_0000_0000 if use_broadcast else 0,
+            # ciaddr - client address
+            #ipaddress.IPv4Address(0),
+            client_ip,
+            # yiaddr - "your address", address being proposed by server
+            #ipaddress.IPv4Address(0),
+            client_ip,
+            # siaddr - servr address
+            ipaddress.IPv4Address(0),
+            # giaddr - gateway address = relay address
+            relay_ip,
+            mac_addr,
+            sname,
+            fname,
+            option_list,
+        )
+    

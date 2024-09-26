@@ -155,7 +155,12 @@ class DHCPClient(object):
     ):
         self.send(server, self.send_to_port, release_packet.asbytes, verbosity)
 
-    def get_release(
+    def send_inform(
+        self, server: str, inform_packet: packet.DHCPPacket, verbosity: int
+    ):
+        self.send(server, self.send_to_port, inform_packet.asbytes, verbosity)
+
+    def put_release(
         self,
         mac_addr: Optional[str] = None,
         server: str = "255.255.255.255",
@@ -174,6 +179,38 @@ class DHCPClient(object):
         )
         self.send_release(server=server, release_packet=release, verbosity=verbose)
 
+    def put_inform(
+        self,
+        mac_addr: Optional[str] = None,
+        broadcast: bool = True,
+        relay: Optional[str] = None,
+        client: Optional[str] = None,
+        server: str = "255.255.255.255",
+        ip_protocol: int = 4,
+        options_list: Optional[options.OptionList] = None,
+        verbose: int = 0,
+    ):
+        mac_addr = mac_addr or utils.random_mac()
+        logging.debug("Synthetizing inform packet")
+
+        # I
+        start = int(default_timer())
+        inform = packet.DHCPPacket.Inform(
+            mac_addr,
+            int(default_timer()-start),
+            0,
+            use_broadcast=broadcast,
+            option_list=options_list,
+            client_ip=client,
+            relay=relay,
+        )
+        tx_id = inform.xid
+        if verbose > 1:
+            print("INFORM Packet")
+            print(format_dhcp_packet(inform))
+        logging.debug(f"Constructed inform packet: {inform}")
+        logging.debug(f"Sending inform packet to {server} with {tx_id=}")
+        self.send_inform(server, inform, verbose)        
 
     def get_lease(
         self,
