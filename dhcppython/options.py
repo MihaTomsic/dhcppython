@@ -1784,11 +1784,47 @@ class RelayAgentInformation(StrOption):
     """
     Option 82
 
-    Relay Agent Information
+    Relay Agent Information is comprised of suboptions with basically same 
+    structure as a string option.
+
     """
 
     code = 82
     key = "relay_agent_info"
+
+    code82 = {
+        1: "circuit_id",
+        2: "remote_id",
+    }
+    key82 = {
+        "circuit_id": 1,
+        "remote_id": 2,
+    }
+
+    @property
+    def value(self) -> Dict[str, Dict[str, str]]:
+
+        if self._value is None:
+            self._value = {}
+            data = self.data
+            while data:
+                code, length = struct.unpack(">BB",data[:2])
+                data0 = data[2:2+length]
+                self._value[self.code82[code]] = data0.decode()
+                data = data[2+length:]
+        return self._value
+
+    @classmethod
+    def from_value(cls, value):
+        data = b""
+        for raisub in ["circuit_id","remote_id"]:
+            if raisub in value[cls.key]:    
+                subval = value[cls.key][raisub]
+                data0 = subval.encode()
+                data += struct.pack(">Bb", cls.key82[raisub], len(data0)) + \
+                        struct.pack(">" + "B" * len(data0), *data0)
+        return cls(cls.code, len(data), data)
+
 
 
 class UnknownOption(BinOption):
