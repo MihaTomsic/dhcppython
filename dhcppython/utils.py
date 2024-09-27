@@ -48,6 +48,28 @@ def random_mac(num_bytes: int = 6, delimiter: str = ":") -> str:
         ["".join(random.choices(VALID_HEX, k=2)) for i in range(num_bytes)]
     )
 
+def random_mac_prefix(num_bytes: int = 6, delimiter: str = ":", prefix: str = "") -> str:
+    """
+    Generates an 6 byte long MAC address with predefined prefix
+
+    >>> random_mac_prefix(prefix="00:0A:A0")
+    '00:0A:A0:85:A4:EF'
+    """
+
+    if not prefix:
+        return random_mac(num_bytes=num_bytes, delimiter=delimiter)
+    else:
+        prefix = prefix.upper()
+        prefix = prefix.replace(":","").replace("-","").replace(".","")
+        if not set(prefix).issubset(set(VALID_HEX)):
+            raise TypeError(f"Wrong characters in MAC prefix: {prefix}")
+        if len(prefix)%2 != 0:
+            raise ValueError(f"Even number of HEX characters expected: {prefix}")
+        prefix_list = [ prefix[i]+prefix[i+1] for i in range(0, len(prefix), 2)]
+        
+        return delimiter.join(prefix_list+
+            ["".join(random.choices(VALID_HEX, k=2)) for i in range(num_bytes-len(prefix)//2)]
+        )
 
 def is_mac_addr(mac_addr: str) -> bool:
     """
