@@ -160,6 +160,11 @@ class DHCPClient(object):
     ):
         self.send(server, self.send_to_port, inform_packet.asbytes, verbosity)
 
+    def send_decline(
+        self, server: str, decline_packet: packet.DHCPPacket, verbosity: int
+    ):
+        self.send(server, self.send_to_port, decline_packet.asbytes, verbosity)
+
     def put_release(
         self,
         mac_addr: Optional[str] = None,
@@ -170,6 +175,7 @@ class DHCPClient(object):
         options_list: Optional[options.OptionList] = None,
         verbose: int = 0,            
     ):
+        logging.debug("Synthetizing release packet")
         release = packet.DHCPPacket.Release(
             mac_addr,
             use_broadcast=broadcast,
@@ -177,6 +183,12 @@ class DHCPClient(object):
             relay=relay,
             client=client,
         )
+        tx_id = release.xid
+        if verbose > 1:
+            print("RELEASE Packet")
+            print(format_dhcp_packet(release))
+        logging.debug(f"Constructed release packet: {release}")
+        logging.debug(f"Sending release packet to {server} with {tx_id=}")
         self.send_release(server=server, release_packet=release, verbosity=verbose)
 
     def put_inform(
@@ -190,15 +202,9 @@ class DHCPClient(object):
         options_list: Optional[options.OptionList] = None,
         verbose: int = 0,
     ):
-        mac_addr = mac_addr or utils.random_mac()
         logging.debug("Synthetizing inform packet")
-
-        # I
-        start = int(default_timer())
         inform = packet.DHCPPacket.Inform(
             mac_addr,
-            int(default_timer()-start),
-            0,
             use_broadcast=broadcast,
             option_list=options_list,
             client_ip=client,
@@ -210,7 +216,34 @@ class DHCPClient(object):
             print(format_dhcp_packet(inform))
         logging.debug(f"Constructed inform packet: {inform}")
         logging.debug(f"Sending inform packet to {server} with {tx_id=}")
-        self.send_inform(server, inform, verbose)        
+        self.send_inform(server=server, inform_packet=inform, verbosity=verbose)
+
+    def put_decline(
+        self,
+        mac_addr: Optional[str] = None,
+        server: str = "255.255.255.255",
+        relay: Optional[str] = None,
+        client: Optional[str] = None,
+        broadcast: bool = True,        
+        options_list: Optional[options.OptionList] = None,
+        verbose: int = 0,            
+    ):
+        logging.debug("Synthetizing decline packet")
+        decline = packet.DHCPPacket.Decline(
+            mac_addr,
+            use_broadcast=broadcast,
+            option_list=options_list,
+            relay=relay,
+            client=client,
+        )
+        tx_id = decline.xid
+        if verbose > 1:
+            print("INFORM Packet")
+            print(format_dhcp_packet(decline))
+        logging.debug(f"Constructed decline packet: {decline}")
+        logging.debug(f"Sending decline packet to {server} with {tx_id=}")
+     
+        self.send_decline(server=server, decline_packet=decline, verbosity=verbose)
 
     def get_lease(
         self,

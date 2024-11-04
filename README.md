@@ -1,6 +1,6 @@
 # DHCP Python
 
-Version 0.1.4
+Version 0.1.4b
 
 A Python implementation of a DHCP client and the tools to manipulate DHCP packets. Includes:
 
